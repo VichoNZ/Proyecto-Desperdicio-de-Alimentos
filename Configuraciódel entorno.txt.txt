@@ -1,73 +1,99 @@
-Configuración del Entorno de Desarrollo
-1.	Software y frameworks utilizados
-Para la implementación del prototipo del sistema se definió un entorno de desarrollo simple, funcional y adecuado a los objetivos de la asignatura, priorizando la correcta gestión del proyecto por sobre la complejidad técnica.
-Las tecnologías seleccionadas son las siguientes:
-•	PHP: versión 8.2.x (incluida en XAMPP) 
-•	Apache: versión 2.4.x (incluida en XAMPP) 
-•	HTML: HTML5 (estándar actual de desarrollo web) 
-•	C++: estándar C++17 (compilador MinGW g++) 
-•	Visual Studio Code: versión 1.80 o superior 
-•	XAMPP: versión 8.x
-Control de versiones: Git bash (2.53.0) + GitHub 
-El uso de estas tecnologías permite construir un prototipo funcional que representa el flujo principal del sistema sin incurrir en una sobrecarga técnica innecesaria.
-1.2 Justificación de las tecnologías
-Se seleccionó PHP junto con Apache debido a su facilidad de implementación en entornos locales mediante herramientas como XAMPP, lo que permite ejecutar aplicaciones web sin configuraciones complejas. HTML se utilizó para la construcción de interfaces simples de usuario, permitiendo visualizar el sistema en un navegador.
-Adicionalmente, se consideró el uso de C++ como lenguaje complementario para validar pequeñas funcionalidades lógicas, sin ser parte central del sistema.
-Esta elección tecnológica se alinea con el enfoque del curso, donde se prioriza la planificación, organización y gestión del desarrollo por sobre la implementación técnica avanzada.
-1.3 Instalación del entorno
-Para la configuración del entorno de desarrollo se realizaron los siguientes pasos:
-1.	Instalación de Visual Studio Code como editor de código fuente. 
-2.	Instalación de XAMPP, que incluye el servidor Apache y el intérprete de PHP. 
-3.	Activación del servicio Apache desde el panel de control de XAMPP. 
-4.	Creación de la estructura de carpetas del proyecto, separando los componentes en: 
-•	html/ 
-•	php/ 
-•	java/ 
-•	cpp/ 
-5.	Ubicación de los archivos PHP dentro del directorio htdocs de XAMPP para su correcta ejecución en el servidor local. 
-6.	Instalación de extensiones en Visual Studio Code para soporte de lenguajes (PHP, C++, HTML). 
-1.4 Manual de instalación
-Para replicar el entorno de desarrollo, se deben seguir los siguientes pasos:
-1.	Descargar e instalar Visual Studio Code desde el sitio oficial. 
-2.	Descargar e instalar XAMPP desde https://www.apachefriends.org 
-3.	Ejecutar XAMPP y activar el servicio Apache. 
-4.	Crear una carpeta de proyecto dentro del directorio: 
-C:\xampp\htdocs\
-5.	Copiar los archivos del proyecto dentro de dicha carpeta. 
-6.	Acceder a la aplicación desde un navegador mediante la siguiente URL: http://localhost/Proyecto-Desperdicio-de-Alimentos/
-7.	Verificar que los archivos PHP se ejecuten correctamente. 
-1.5 Verificación del entorno
-Para validar el correcto funcionamiento del entorno, se realizaron pruebas utilizando archivos simples en cada tecnología implementada.
-Prueba PHP
-Se creó un archivo test.php con el siguiente contenido:
-<?php
-echo "Servidor funcionando correctamente";
-?>
-Este archivo fue ejecutado mediante el navegador accediendo a:
-http://localhost/Proyecto-Desperdicio-de-Alimentos/
-Obteniendo como resultado la visualización del mensaje esperado.
-Prueba HTML
-Se creó un archivo index.html con el siguiente contenido:
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Prueba</title>
-</head>
-<body>
-    <h1>Plataforma funcionando correctamente</h1>
-</body>
-</html>
-El archivo fue abierto en el navegador, verificando la correcta visualización de la interfaz.
-Prueba C++
-Se creó un archivo de prueba para validar la ejecución del entorno de C++:
-#include <iostream>
-using namespace std;
+1.- Configurar el entorno
+Software y frameworks a utilizar
 
-int main() {
-    cout << "C++ funcionando correctamente" << endl;
-    return 0;
+Para el desarrollo del prototipo de la Plataforma de Gestión de Excedentes Alimentarios, se utilizará un entorno basado en Docker + n8n, ya que permite construir flujos funcionales de manera visual y automatizada, sin requerir una implementación completa desde cero.
+
+Software / herramienta	Versión utilizada	Uso en el proyecto
+Docker Desktop	4.x o superior	Ejecutar n8n en un contenedor.
+Docker Engine	27.x o superior	Motor de ejecución de contenedores.
+Docker Compose	Incluido en Docker Desktop	Levantar el entorno mediante archivo docker-compose.yml.
+n8n	1.x	Crear flujos de automatización para publicación, alerta y reserva de donaciones.
+Visual Studio Code	1.80 o superior	Editar archivos del proyecto y documentación.
+Git Bash	2.x o superior	Ejecutar comandos Git.
+GitHub	Plataforma web	Control de versiones y trabajo colaborativo.
+Navegador web	Chrome / Edge	Acceso a n8n desde localhost:5678.
+Instalación de dependencias
+
+En este proyecto no se requiere instalar dependencias manualmente con npm, pip u otro gestor, ya que n8n se ejecuta directamente mediante Docker.
+
+La única dependencia principal es tener instalado y funcionando:
+
+docker --version
+
+También se verifica Docker Compose con:
+
+docker compose version
+Manual de instalación
+Instalar Docker Desktop en el computador.
+Instalar Git Bash.
+Instalar Visual Studio Code.
+Crear la carpeta del proyecto:
+mkdir Proyecto-Desperdicio-de-Alimentos
+cd Proyecto-Desperdicio-de-Alimentos
+Crear el archivo docker-compose.yml con la siguiente configuración:
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-desperdicio-alimentos
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - TZ=America/Santiago
+      - GENERIC_TIMEZONE=America/Santiago
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows
+
+volumes:
+  n8n_data:
+Levantar el entorno con Docker:
+docker compose up -d
+Verificar que el contenedor esté activo:
+docker ps
+Ingresar a n8n desde el navegador:
+http://localhost:5678
+Verificación del entorno
+
+Para comprobar que el entorno funciona correctamente, se realizaron las siguientes pruebas:
+
+Prueba 1: Verificación de Docker
+
+Comando ejecutado:
+
+docker ps
+
+Resultado esperado:
+
+El contenedor n8n-desperdicio-alimentos aparece en estado Up.
+Prueba 2: Acceso a n8n
+
+Se ingresó desde el navegador a:
+
+http://localhost:5678
+
+Resultado esperado:
+
+La interfaz de n8n carga correctamente.
+Prueba 3: Workflow de prueba
+
+Se creó un workflow básico en n8n con los siguientes nodos:
+
+Manual Trigger → Set
+
+En el nodo Set se agregaron datos de prueba:
+
+{
+  "producto": "Pan",
+  "cantidad": "10 kg",
+  "categoria": "Panadería",
+  "estado": "Disponible"
 }
-El programa fue compilado y ejecutado correctamente mediante un compilador instalado en el sistema.
 
-1.6 Conclusión de la configuración
-El entorno de desarrollo fue configurado exitosamente, permitiendo la ejecución de aplicaciones web mediante PHP y Apache, así como la validación de componentes adicionales. Las pruebas realizadas confirmaron el correcto funcionamiento de cada tecnología, asegurando una base sólida para el desarrollo del prototipo del sistema.
+Resultado esperado:
+
+El workflow se ejecuta correctamente y muestra los datos configurados.
+Conclusión de la configuración
+
+El entorno fue configurado correctamente utilizando Docker, n8n, Visual Studio Code, Git Bash y GitHub. La ejecución del contenedor fue verificada mediante comandos de Docker, y el acceso a n8n fue validado desde el navegador. Además, se creó un workflow de prueba para confirmar que la plataforma permite construir flujos funcionales, dejando el entorno listo para desarrollar el prototipo del sistema de gestión de excedentes alimentarios.
