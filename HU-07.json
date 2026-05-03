@@ -1,0 +1,268 @@
+{
+  "name": "sprint1 excedentes",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ingreso-excedentes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0a9140b9-39d9-4a67-a293-dfbe9e1a916d",
+      "name": "Webhook",
+      "webhookId": "e680cb49-8041-45c0-bbac-65342485d380"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ee6637b9-1263-4a8a-87be-7b055f490ad9",
+              "leftValue": "={{ $json.body.fecha_vencimiento }}",
+              "rightValue": "={{ $now }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "afterOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "59ab6ae2-68d8-4ddf-8d39-274e8eda937d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d0e34b33-7bb5-4c5a-bed9-f88c880f88ba",
+              "name": "es_urgente",
+              "value": "={{ DateTime.fromISO($json.body.fecha_vencimiento) <= $now.plus(2, 'days') }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        -96
+      ],
+      "id": "86c77020-0cb4-42eb-b425-7a9304fad5bc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "donaciones",
+          "mode": "list",
+          "cachedResultName": "donaciones"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "es_urgente": "={{ $json.es_urgente }}",
+            "cantidad": "={{ $json.body.cantidad }}",
+            "nombre_producto": "={{ $json.body.nombre_producto }}",
+            "categoria": "={{ $json.body.categoria }}",
+            "fecha_vencimiento": "={{ $json.body.fecha_vencimiento }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nombre_producto",
+              "displayName": "nombre_producto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cantidad",
+              "displayName": "cantidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_vencimiento",
+              "displayName": "fecha_vencimiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "es_urgente",
+              "displayName": "es_urgente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        624,
+        -96
+      ],
+      "id": "8b6d9bf3-a176-4920-9bdc-e096e9206283",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "7eMRa2exXOJoGuVB",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ntfy.sh/rescate_alimentos_italo",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/plain",
+        "body": "=¡Atención ONG! Tenemos {{ $json.cantidad }} unidades de {{ $json.nombre_producto }} disponibles. Vencen el {{ $json.fecha_vencimiento }}.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "2fd159ef-b0a6-4557-a4d6-2e1bcb3930e2",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3d032990-62ce-4f1b-8c19-5c629a7c7b75",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "348d832f3835052a0528064657da5d8bde7f58800d703bf9d263262fc3c62c59"
+  },
+  "id": "PPU8hUiI9zzK2BJK",
+  "tags": []
+}
