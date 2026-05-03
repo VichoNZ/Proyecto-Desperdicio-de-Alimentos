@@ -1,0 +1,349 @@
+{
+  "name": "Flujo Combinado - Excedentes Alimentarios",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "excedentes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1088,
+        2912
+      ],
+      "id": "9d1aed1f-ae01-4fe9-bd02-6ad47d666cb9",
+      "name": "Webhook Frontend",
+      "webhookId": "6a1be99d-6af8-4d77-9935-20cbe8f64e65"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\n\nif (!staticData.usuarios) staticData.usuarios = [];\nif (!staticData.donaciones) staticData.donaciones = [];\nif (!staticData.notificaciones) staticData.notificaciones = [];\nif (!staticData.reservas) staticData.reservas = [];\n\nconst input = $input.first().json;\nconst query = input.query || {};\nconst accion = query.accion || \"inicio\";\n\nfunction htmlBase(contenido) {\n  return `\n  <!DOCTYPE html>\n  <html lang=\"es\">\n  <head>\n    <meta charset=\"UTF-8\">\n    <title>Plataforma de Excedentes Alimentarios</title>\n    <style>\n      body { font-family: Arial, sans-serif; background: #f4f7f5; margin: 0; padding: 0; }\n      header { background: #2e7d32; color: white; padding: 25px; text-align: center; }\n      main { width: 90%; max-width: 950px; margin: 30px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }\n      nav a { display: inline-block; margin: 6px; padding: 9px 13px; background: #e8f5e9; color: #2e7d32; text-decoration: none; border-radius: 6px; font-weight: bold; }\n      nav a:hover { background: #c8e6c9; }\n      nav a.alerta { background: #ffebee; color: #c62828; }\n      nav a.alerta:hover { background: #ffcdd2; }\n      input, select, textarea, button { width: 100%; padding: 10px; margin: 8px 0 14px 0; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }\n      button { background: #2e7d32; color: white; border: none; cursor: pointer; font-weight: bold; }\n      button:hover { background: #256628; }\n      button.btn-rojo { background: #c62828; }\n      button.btn-rojo:hover { background: #b71c1c; }\n      .card { border: 1px solid #ddd; border-left: 6px solid #2e7d32; padding: 15px; margin: 15px 0; border-radius: 8px; background: #fafafa; }\n      .critica { border-left-color: #d32f2f; background: #fff3f3; }\n      .vencida { border-left-color: #7b1fa2; background: #f3e5f5; }\n      .badge { display: inline-block; background: #d32f2f; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; margin-right: 6px; }\n      .badge-vencido { background: #7b1fa2; }\n      .frio { background: #0277bd; }\n      .ok { background: #e8f5e9; border-left: 6px solid #2e7d32; padding: 12px; border-radius: 8px; }\n      .error { background: #ffebee; border-left: 6px solid #d32f2f; padding: 12px; border-radius: 8px; }\n      .advertencia { background: #fff3e0; border-left: 6px solid #e65100; padding: 12px; border-radius: 8px; margin-bottom: 16px; }\n      table { width: 100%; border-collapse: collapse; margin-top: 15px; }\n      th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }\n      th { background: #e8f5e9; }\n    </style>\n  </head>\n  <body>\n    <header>\n      <h1>Plataforma de Gestión de Excedentes Alimentarios</h1>\n      <p>Prototipo funcional en n8n + Docker</p>\n    </header>\n    <main>\n      <nav>\n        <a href=\"?accion=inicio\">Inicio</a>\n        <a href=\"?accion=registro\">Registrar usuario</a>\n        <a href=\"?accion=usuarios\">Usuarios</a>\n        <a href=\"?accion=publicar\">Publicar excedente</a>\n        <a href=\"?accion=publicar_vencido\" class=\"alerta\">⚠️ Reportar producto vencido</a>\n        <a href=\"?accion=donaciones\">Ver donaciones</a>\n        <a href=\"?accion=notificaciones\">Notificaciones ONG</a>\n        <a href=\"?accion=reservas\">Reservas</a>\n      </nav>\n      <hr>\n      ${contenido}\n    </main>\n  </body>\n  </html>\n  `;\n}\n\nfunction responder(contenido) {\n  return [{ json: { html: htmlBase(contenido), accionPendiente: null } }];\n}\n\nfunction responderConAccion(contenido, accion, payload) {\n  return [{ json: { html: htmlBase(contenido), accionPendiente: accion, payload } }];\n}\n\nfunction escapar(texto) {\n  if (!texto) return \"\";\n  return String(texto)\n    .replaceAll(\"&\", \"&amp;\")\n    .replaceAll(\"<\", \"&lt;\")\n    .replaceAll(\">\", \"&gt;\");\n}\n\nif (accion === \"inicio\") {\n  return responder(`\n    <h2>Bienvenido al sistema</h2>\n    <p>Este prototipo representa el flujo principal del Sprint 1 usando n8n como backend mediante Webhooks.</p>\n    <h3>Funcionalidades implementadas</h3>\n    <ul>\n      <li>Registro de usuarios Donante y Organización Social.</li>\n      <li>Publicación de excedentes alimentarios.</li>\n      <li>Validación de fecha de vencimiento.</li>\n      <li>Marcado de productos con cadena de frío.</li>\n      <li>Priorización por vencimiento más próximo.</li>\n      <li>Generación de alertas para organizaciones sociales.</li>\n      <li>Reserva de donaciones.</li>\n      <li>Generación de QR simulado para retiro.</li>\n      <li><strong>Reporte de productos vencidos con alerta push a ONGs.</strong></li>\n    </ul>\n    <p class=\"ok\"><strong>Estado:</strong> n8n funcionando correctamente con Docker.</p>\n  `);\n}\n\nif (accion === \"registro\") {\n  return responder(`\n    <h2>Registrar usuario</h2>\n    <form method=\"GET\">\n      <input type=\"hidden\" name=\"accion\" value=\"guardar_usuario\">\n      <label>Nombre:</label>\n      <input name=\"nombre\" required>\n      <label>Email:</label>\n      <input name=\"email\" type=\"email\" required>\n      <label>Rol:</label>\n      <select name=\"rol\" required>\n        <option value=\"DONANTE\">Donante</option>\n        <option value=\"ONG\">Organización Social</option>\n      </select>\n      <label>Dirección:</label>\n      <input name=\"direccion\" required>\n      <button type=\"submit\">Guardar usuario</button>\n    </form>\n  `);\n}\n\nif (accion === \"guardar_usuario\") {\n  const usuario = {\n    id: Date.now(),\n    nombre: escapar(query.nombre),\n    email: escapar(query.email),\n    rol: query.rol,\n    direccion: escapar(query.direccion),\n    verificado: true,\n    creadoEn: new Date().toISOString()\n  };\n  staticData.usuarios.push(usuario);\n  return responder(`\n    <h2>Usuario registrado correctamente</h2>\n    <div class=\"ok\">\n      <p><strong>ID:</strong> ${usuario.id}</p>\n      <p><strong>Nombre:</strong> ${usuario.nombre}</p>\n      <p><strong>Email:</strong> ${usuario.email}</p>\n      <p><strong>Rol:</strong> ${usuario.rol}</p>\n      <p><strong>Dirección:</strong> ${usuario.direccion}</p>\n    </div>\n    <p>Este usuario ya puede participar en el flujo del sistema.</p>\n    <a href=\"?accion=usuarios\">Ver usuarios registrados</a>\n  `);\n}\n\nif (accion === \"usuarios\") {\n  const filas = staticData.usuarios.map(u => `\n    <tr>\n      <td>${u.id}</td>\n      <td>${u.nombre}</td>\n      <td>${u.email}</td>\n      <td>${u.rol}</td>\n      <td>${u.direccion}</td>\n    </tr>\n  `).join(\"\");\n  return responder(`\n    <h2>Usuarios registrados</h2>\n    <table>\n      <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Dirección</th></tr>\n      ${filas || `<tr><td colspan=\"5\">No hay usuarios registrados.</td></tr>`}\n    </table>\n  `);\n}\n\nif (accion === \"publicar\") {\n  const donantes = staticData.usuarios.filter(u => u.rol === \"DONANTE\");\n  if (donantes.length === 0) {\n    return responder(`\n      <h2>Publicar excedente</h2>\n      <p class=\"error\">Primero debes registrar al menos un usuario con rol Donante.</p>\n      <a href=\"?accion=registro\">Registrar usuario</a>\n    `);\n  }\n  const opcionesDonantes = donantes.map(u => `<option value=\"${u.id}\">${u.nombre}</option>`).join(\"\");\n  return responder(`\n    <h2>Publicar excedente alimentario</h2>\n    <form method=\"GET\">\n      <input type=\"hidden\" name=\"accion\" value=\"guardar_donacion\">\n      <label>Donante:</label>\n      <select name=\"donanteId\" required>${opcionesDonantes}</select>\n      <label>Nombre del producto:</label>\n      <input name=\"nombre\" placeholder=\"Ej: Panadería del día\" required>\n      <label>Categoría:</label>\n      <select name=\"categoria\" required>\n        <option value=\"Panadería\">Panadería</option>\n        <option value=\"Lácteos\">Lácteos</option>\n        <option value=\"Frutas y verduras\">Frutas y verduras</option>\n        <option value=\"Abarrotes\">Abarrotes</option>\n        <option value=\"Otros\">Otros</option>\n      </select>\n      <label>Cantidad:</label>\n      <input name=\"cantidad\" placeholder=\"Ej: 15\" type=\"number\" required>\n      <label>Fecha y hora de vencimiento:</label>\n      <input name=\"vencimiento\" type=\"datetime-local\" required>\n      <label>Cadena de frío:</label>\n      <select name=\"cadenaFrio\">\n        <option value=\"NO\">No requiere</option>\n        <option value=\"SI\">Sí requiere</option>\n      </select>\n      <label>Observaciones:</label>\n      <textarea name=\"observaciones\" placeholder=\"Ej: Producto apto para consumo, retirar hoy.\"></textarea>\n      <button type=\"submit\">Publicar donación</button>\n    </form>\n  `);\n}\n\n// ─── NUEVA ACCIÓN: formulario producto vencido ────────────────────────────────\nif (accion === \"publicar_vencido\") {\n  const donantes = staticData.usuarios.filter(u => u.rol === \"DONANTE\");\n  if (donantes.length === 0) {\n    return responder(`\n      <h2>Reportar producto vencido</h2>\n      <p class=\"error\">Primero debes registrar al menos un usuario con rol Donante.</p>\n      <a href=\"?accion=registro\">Registrar usuario</a>\n    `);\n  }\n  const opcionesDonantes = donantes.map(u => `<option value=\"${u.id}\">${u.nombre}</option>`).join(\"\");\n  return responder(`\n    <h2>⚠️ Reportar producto vencido</h2>\n    <div class=\"advertencia\">\n      <strong>Atención:</strong> Este formulario es para registrar productos cuya fecha de vencimiento ya expiró.\n      Al registrarlo, las organizaciones sociales recibirán una alerta de producto vencido por notificación push.\n    </div>\n    <form method=\"GET\">\n      <input type=\"hidden\" name=\"accion\" value=\"guardar_vencido\">\n      <label>Donante:</label>\n      <select name=\"donanteId\" required>${opcionesDonantes}</select>\n      <label>Nombre del producto:</label>\n      <input name=\"nombre\" placeholder=\"Ej: Yogur natural\" required>\n      <label>Categoría:</label>\n      <select name=\"categoria\" required>\n        <option value=\"Panadería\">Panadería</option>\n        <option value=\"Lácteos\">Lácteos</option>\n        <option value=\"Frutas y verduras\">Frutas y verduras</option>\n        <option value=\"Abarrotes\">Abarrotes</option>\n        <option value=\"Otros\">Otros</option>\n      </select>\n      <label>Cantidad:</label>\n      <input name=\"cantidad\" placeholder=\"Ej: 10\" type=\"number\" required>\n      <label>Fecha de vencimiento (ya expirada):</label>\n      <input name=\"vencimiento\" type=\"datetime-local\" required>\n      <label>Observaciones:</label>\n      <textarea name=\"observaciones\" placeholder=\"Ej: Vencido ayer, revisar si aún es apto para uso no alimentario.\"></textarea>\n      <button type=\"submit\" class=\"btn-rojo\">⚠️ Registrar producto vencido</button>\n    </form>\n  `);\n}\n\n// ─── NUEVA ACCIÓN: guardar producto vencido ───────────────────────────────────\nif (accion === \"guardar_vencido\") {\n  const vencimiento = new Date(query.vencimiento);\n  const ahora = new Date();\n\n  if (vencimiento >= ahora) {\n    return responder(`\n      <h2>Error al reportar</h2>\n      <p class=\"error\">La fecha ingresada aún no ha vencido. Para productos con fecha futura usa <a href=\"?accion=publicar\">Publicar excedente</a>.</p>\n      <a href=\"?accion=publicar_vencido\">Volver al formulario</a>\n    `);\n  }\n\n  const donante = staticData.usuarios.find(u => String(u.id) === String(query.donanteId));\n\n  const donacion = {\n    id: Date.now(),\n    donanteId: query.donanteId,\n    donanteNombre: donante ? donante.nombre : \"Donante no identificado\",\n    nombre: escapar(query.nombre),\n    categoria: escapar(query.categoria),\n    cantidad: Number(query.cantidad),\n    vencimiento: query.vencimiento,\n    cadenaFrio: false,\n    observaciones: escapar(query.observaciones || \"\"),\n    estado: \"VENCIDO\",\n    creadoEn: new Date().toISOString()\n  };\n\n  staticData.donaciones.push(donacion);\n\n  // Generar notificaciones internas de alerta para todas las ONGs\n  const organizaciones = staticData.usuarios.filter(u => u.rol === \"ONG\");\n  organizaciones.forEach(org => {\n    staticData.notificaciones.push({\n      id: Date.now() + Math.random(),\n      usuarioId: org.id,\n      organizacionNombre: org.nombre,\n      donacionId: donacion.id,\n      mensaje: `⚠️ ALERTA PRODUCTO VENCIDO: ${donacion.nombre} (${donacion.cantidad} unidades). Vencido el ${donacion.vencimiento}. Donante: ${donacion.donanteNombre}.`,\n      fecha: new Date().toISOString(),\n      leida: false,\n      esAlertaVencido: true\n    });\n  });\n\n  return responderConAccion(`\n    <h2>Producto vencido registrado</h2>\n    <div class=\"critica\">\n      <p><strong>Producto:</strong> ${donacion.nombre}</p>\n      <p><strong>Donante:</strong> ${donacion.donanteNombre}</p>\n      <p><strong>Categoría:</strong> ${donacion.categoria}</p>\n      <p><strong>Cantidad:</strong> ${donacion.cantidad}</p>\n      <p><strong>Fecha vencimiento:</strong> ${donacion.vencimiento}</p>\n      <p><strong>Estado:</strong> <span class=\"badge badge-vencido\">VENCIDO</span></p>\n    </div>\n    <p>Se generaron alertas de producto vencido para ${organizaciones.length} organización(es) social(es).</p>\n    <p class=\"advertencia\">⚠️ Notificación push de alerta enviada a ONGs por ntfy.</p>\n    <a href=\"?accion=notificaciones\">Ver notificaciones ONG</a>\n  `, \"guardar_vencido\", {\n    nombre_producto: donacion.nombre,\n    categoria: donacion.categoria,\n    cantidad: donacion.cantidad,\n    fecha_vencimiento: donacion.vencimiento\n  });\n}\n\nif (accion === \"guardar_donacion\") {\n  const vencimiento = new Date(query.vencimiento);\n  const ahora = new Date();\n\n  const donante = staticData.usuarios.find(u => String(u.id) === String(query.donanteId));\n\n  const donacion = {\n    id: Date.now(),\n    donanteId: query.donanteId,\n    donanteNombre: donante ? donante.nombre : \"Donante no identificado\",\n    nombre: escapar(query.nombre),\n    categoria: escapar(query.categoria),\n    cantidad: Number(query.cantidad),\n    vencimiento: query.vencimiento,\n    cadenaFrio: query.cadenaFrio === \"SI\",\n    observaciones: escapar(query.observaciones || \"\"),\n    estado: \"DISPONIBLE\",\n    creadoEn: new Date().toISOString()\n  };\n\n  staticData.donaciones.push(donacion);\n\n  const organizaciones = staticData.usuarios.filter(u => u.rol === \"ONG\");\n  organizaciones.forEach(org => {\n    staticData.notificaciones.push({\n      id: Date.now() + Math.random(),\n      usuarioId: org.id,\n      organizacionNombre: org.nombre,\n      donacionId: donacion.id,\n      mensaje: `Nueva donación disponible: ${donacion.nombre} - ${donacion.cantidad}`,\n      fecha: new Date().toISOString(),\n      leida: false\n    });\n  });\n\n  return responderConAccion(`\n    <h2>Donación publicada correctamente</h2>\n    <div class=\"ok\">\n      <p><strong>Producto:</strong> ${donacion.nombre}</p>\n      <p><strong>Donante:</strong> ${donacion.donanteNombre}</p>\n      <p><strong>Categoría:</strong> ${donacion.categoria}</p>\n      <p><strong>Cantidad:</strong> ${donacion.cantidad}</p>\n      <p><strong>Vencimiento:</strong> ${donacion.vencimiento}</p>\n      <p><strong>Cadena de frío:</strong> ${donacion.cadenaFrio ? \"Sí requiere\" : \"No requiere\"}</p>\n    </div>\n    <p>Se generaron alertas para ${organizaciones.length} organización(es) social(es).</p>\n    <p class=\"ok\">✅ Notificación push enviada a ONG.</p>\n    <a href=\"?accion=donaciones\">Ver donaciones</a>\n  `, \"guardar_donacion\", {\n    nombre_producto: donacion.nombre,\n    categoria: donacion.categoria,\n    cantidad: donacion.cantidad,\n    fecha_vencimiento: donacion.vencimiento\n  });\n}\n\nif (accion === \"donaciones\") {\n  const disponibles = staticData.donaciones\n    .filter(d => d.estado === \"DISPONIBLE\")\n    .sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));\n\n  const organizaciones = staticData.usuarios.filter(u => u.rol === \"ONG\");\n  const opcionesONG = organizaciones.map(u => `<option value=\"${u.id}\">${u.nombre}</option>`).join(\"\");\n\n  const lista = disponibles.map(d => {\n    const horasRestantes = (new Date(d.vencimiento) - new Date()) / 1000 / 60 / 60;\n    const critica = horasRestantes <= 6;\n    return `\n      <div class=\"card ${critica ? \"critica\" : \"\"}\">\n        <h3>${d.nombre}</h3>\n        ${critica ? `<span class=\"badge\">Urgente</span>` : \"\"}\n        ${d.cadenaFrio ? `<span class=\"badge frio\">Cadena de frío</span>` : \"\"}\n        <p><strong>Donante:</strong> ${d.donanteNombre}</p>\n        <p><strong>Categoría:</strong> ${d.categoria}</p>\n        <p><strong>Cantidad:</strong> ${d.cantidad}</p>\n        <p><strong>Vencimiento:</strong> ${d.vencimiento}</p>\n        <p><strong>Estado:</strong> ${d.estado}</p>\n        <p><strong>Observaciones:</strong> ${d.observaciones || \"Sin observaciones\"}</p>\n        ${\n          organizaciones.length > 0\n          ? `<form method=\"GET\">\n              <input type=\"hidden\" name=\"accion\" value=\"reservar\">\n              <input type=\"hidden\" name=\"donacionId\" value=\"${d.id}\">\n              <label>Organización que reserva:</label>\n              <select name=\"usuarioId\" required>${opcionesONG}</select>\n              <button type=\"submit\">Reservar donación</button>\n            </form>`\n          : `<p class=\"error\">No hay organizaciones sociales registradas para reservar.</p>`\n        }\n      </div>\n    `;\n  }).join(\"\");\n\n  return responder(`\n    <h2>Donaciones disponibles</h2>\n    <p>Las donaciones se muestran ordenadas por fecha de vencimiento más próxima.</p>\n    ${lista || \"<p>No hay donaciones disponibles.</p>\"}\n  `);\n}\n\nif (accion === \"reservar\") {\n  const donacion = staticData.donaciones.find(d => String(d.id) === String(query.donacionId));\n  const organizacion = staticData.usuarios.find(u => String(u.id) === String(query.usuarioId));\n\n  if (!donacion || donacion.estado !== \"DISPONIBLE\") {\n    return responder(`\n      <h2>No se pudo reservar</h2>\n      <p class=\"error\">La donación ya no está disponible.</p>\n      <a href=\"?accion=donaciones\">Volver a donaciones</a>\n    `);\n  }\n\n  if (!organizacion || organizacion.rol !== \"ONG\") {\n    return responder(`\n      <h2>No se pudo reservar</h2>\n      <p class=\"error\">Solo una organización social puede reservar donaciones.</p>\n      <a href=\"?accion=donaciones\">Volver a donaciones</a>\n    `);\n  }\n\n  donacion.estado = \"RESERVADA\";\n\n  const reserva = {\n    id: Date.now(),\n    donacionId: donacion.id,\n    producto: donacion.nombre,\n    usuarioId: organizacion.id,\n    organizacionNombre: organizacion.nombre,\n    codigoQR: `QR-${donacion.id}-${organizacion.id}`,\n    fechaReserva: new Date().toISOString(),\n    estado: \"ACTIVA\"\n  };\n\n  staticData.reservas.push(reserva);\n\n  return responder(`\n    <h2>Donación reservada correctamente</h2>\n    <div class=\"ok\">\n      <p><strong>Producto:</strong> ${donacion.nombre}</p>\n      <p><strong>Reservada por:</strong> ${organizacion.nombre}</p>\n      <p><strong>Estado:</strong> RESERVADA</p>\n      <p><strong>Código QR simulado:</strong></p>\n      <h3>${reserva.codigoQR}</h3>\n    </div>\n    <p>Este QR simula la validación de retiro de la donación.</p>\n    <a href=\"?accion=reservas\">Ver reservas</a>\n  `);\n}\n\nif (accion === \"notificaciones\") {\n  const organizaciones = staticData.usuarios.filter(u => u.rol === \"ONG\");\n  if (organizaciones.length === 0) {\n    return responder(`\n      <h2>Notificaciones ONG</h2>\n      <p class=\"error\">No hay organizaciones sociales registradas.</p>\n      <a href=\"?accion=registro\">Registrar organización</a>\n    `);\n  }\n  const opcionesONG = organizaciones.map(u => `<option value=\"${u.id}\">${u.nombre}</option>`).join(\"\");\n  if (!query.usuarioId) {\n    return responder(`\n      <h2>Consultar notificaciones</h2>\n      <form method=\"GET\">\n        <input type=\"hidden\" name=\"accion\" value=\"notificaciones\">\n        <label>Organización Social:</label>\n        <select name=\"usuarioId\" required>${opcionesONG}</select>\n        <button type=\"submit\">Ver notificaciones</button>\n      </form>\n    `);\n  }\n  const notificaciones = staticData.notificaciones.filter(n => String(n.usuarioId) === String(query.usuarioId));\n  const lista = notificaciones.map(n => `\n    <div class=\"card ${n.esAlertaVencido ? 'vencida' : ''}\">\n      ${n.esAlertaVencido ? '<span class=\"badge badge-vencido\">⚠️ PRODUCTO VENCIDO</span>' : ''}\n      <p>${n.mensaje}</p>\n      <p><strong>Fecha:</strong> ${n.fecha}</p>\n    </div>\n  `).join(\"\");\n  return responder(`\n    <h2>Notificaciones de la organización</h2>\n    ${lista || \"<p>No hay notificaciones registradas.</p>\"}\n  `);\n}\n\nif (accion === \"reservas\") {\n  const lista = staticData.reservas.map(r => `\n    <div class=\"card\">\n      <h3>${r.producto}</h3>\n      <p><strong>Organización:</strong> ${r.organizacionNombre}</p>\n      <p><strong>Fecha reserva:</strong> ${r.fechaReserva}</p>\n      <p><strong>Estado:</strong> ${r.estado}</p>\n      <p><strong>QR:</strong> ${r.codigoQR}</p>\n    </div>\n  `).join(\"\");\n  return responder(`\n    <h2>Reservas registradas</h2>\n    ${lista || \"<p>No hay reservas registradas.</p>\"}\n  `);\n}\n\nreturn responder(`\n  <h2>Acción no reconocida</h2>\n  <p>La acción solicitada no existe.</p>\n`);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        2912
+      ],
+      "id": "0ab79d17-fe8b-4e04-8205-3d083641944f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-accion-donacion",
+              "leftValue": "={{ $json.accionPendiente }}",
+              "rightValue": "guardar_donacion",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -672,
+        2912
+      ],
+      "id": "6cab5a27-d89f-4dab-94e9-b0befa7c8799",
+      "name": "¿Es nueva donación?"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -464,
+        3040
+      ],
+      "id": "be8258f4-5214-4d6c-9118-95e6e6edc606",
+      "name": "Respond to Webhook (otras acciones)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ee6637b9-1263-4a8a-87be-7b055f490ad9",
+              "leftValue": "={{ $json.payload.fecha_vencimiento }}",
+              "rightValue": "={{ $now }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "afterOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -464,
+        2784
+      ],
+      "id": "8737100e-d211-4ce2-8bd2-531981def370",
+      "name": "Validar fecha vencimiento"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d0e34b33-7bb5-4c5a-bed9-f88c880f88ba",
+              "name": "es_urgente",
+              "value": "={{ DateTime.fromISO($json.payload.fecha_vencimiento) <= $now.plus(2, 'days') }}",
+              "type": "boolean"
+            },
+            {
+              "id": "pass-html",
+              "name": "html",
+              "value": "={{ $json.html }}",
+              "type": "string"
+            },
+            {
+              "id": "pass-payload",
+              "name": "payload",
+              "value": "={{ $json.payload }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        2784
+      ],
+      "id": "dca83b69-ce95-4f91-b187-fb0a3c984470",
+      "name": "Calcular urgencia"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ntfy.sh/rescate_alimentos_italo",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/plain",
+        "body": "={{ $json.accionPendiente === 'guardar_vencido' ? '⚠️ ALERTA PRODUCTO VENCIDO: ' + $('Calcular urgencia').first().json.payload.nombre_producto + ' (' + $('Calcular urgencia').first().json.payload.cantidad + ' unidades). Vencido el ' + $('Calcular urgencia').first().json.payload.fecha_vencimiento + '. Requiere atención inmediata.' : '¡Atención ONG! Tenemos ' + $('Calcular urgencia').first().json.payload.cantidad + ' unidades de ' + $('Calcular urgencia').first().json.payload.nombre_producto + ' disponibles. Vencen el ' + $('Calcular urgencia').first().json.payload.fecha_vencimiento + '.' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        160,
+        2784
+      ],
+      "id": "42d80d52-e27a-4b5f-96b3-b3ef4b0a0910",
+      "name": "Notificación Push (ntfy)"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $('Calcular urgencia').first().json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        368,
+        2784
+      ],
+      "id": "0e289fd6-3bb4-476f-9b44-bdaaa3dc42ae",
+      "name": "Respond to Webhook (donación)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-accion-vencido",
+              "leftValue": "={{ $json.accionPendiente }}",
+              "rightValue": "guardar_vencido",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -672,
+        3120
+      ],
+      "id": "e1c893fd-4025-4351-a4d2-80434f2a26e8",
+      "name": "¿Es producto vencido?"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Frontend": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "¿Es nueva donación?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es nueva donación?": {
+      "main": [
+        [
+          {
+            "node": "Validar fecha vencimiento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Es producto vencido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar fecha vencimiento": {
+      "main": [
+        [
+          {
+            "node": "Calcular urgencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook (otras acciones)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular urgencia": {
+      "main": [
+        [
+          {
+            "node": "Notificación Push (ntfy)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificación Push (ntfy)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (donación)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es producto vencido?": {
+      "main": [
+        [
+          {
+            "node": "Calcular urgencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook (otras acciones)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "cd484e5e-85f9-4caa-b6e2-71ad5f4e6b49",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d2306f0a7c7290ea1139fe64b3db6dbc49e7b66b7579a1a685414581b2c1d8cc"
+  },
+  "id": "3XHRJ5sVbrXD7VVn",
+  "tags": []
+}
