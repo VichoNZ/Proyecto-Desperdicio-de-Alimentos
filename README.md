@@ -9,7 +9,7 @@ Diseñar una solución que permita reducir el desperdicio de alimentos mediante 
 - Docker
 - n8n
 - GitHub
-
+- PostgresSQL
 ## Estado del repositorio
 Versión inicial del proyecto con configuración base del entorno y primeros archivos de apoyo.
 
