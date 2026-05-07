@@ -2,294 +2,240 @@
 
 ## 1. Introducción
 
-Para el desarrollo del prototipo de la Plataforma de Gestión de Excedentes Alimentarios se definió un entorno basado en n8n ejecutado mediante Docker. Esta decisión permite construir flujos funcionales de automatización sin depender de una instalación compleja de backend tradicional.
+Para el desarrollo del prototipo de la Plataforma de Gestión de Excedentes Alimentarios se definió un entorno basado en **n8n** ejecutado mediante **Docker**, con **PostgreSQL 16** como base de datos persistente. Esta configuración evolucionó desde el Sprint 1, donde n8n usaba almacenamiento interno, hacia una arquitectura más robusta con base de datos externa en el Sprint 2.
 
-El objetivo principal del entorno es permitir la creación de workflows que simulen el flujo principal del Sprint 1: registro de usuarios, publicación de excedentes alimentarios, generación de alertas, priorización por vencimiento y reserva de donaciones.
+El objetivo del entorno es permitir la creación de workflows que representen el flujo principal del sistema: registro de usuarios, publicación de excedentes alimentarios, generación de alertas, priorización por vencimiento, reserva de donaciones y notificaciones push a ONGs.
 
+Adicionalmente, en el Sprint 2 se incorporó **Jest** como herramienta de testing unitario para validar la lógica de negocio de los módulos JavaScript del proyecto.
+
+---
 
 ## 2. Software y herramientas utilizadas
 
-Las herramientas seleccionadas para el entorno de desarrollo son:
+| Herramienta | Versión | Uso dentro del proyecto |
+|---|---|---|
+| Docker Desktop | Última estable | Ejecuta n8n y PostgreSQL en contenedores |
+| n8n | Latest | Plataforma principal de flujos y automatización |
+| PostgreSQL | 16 | Base de datos persistente del sistema |
+| Node.js | 18+ | Ejecución de scripts y tests |
+| Jest | Última estable | Testing unitario y cobertura de código |
+| Visual Studio Code | Última estable | Editor de archivos del proyecto |
+| Git | Última estable | Control de versiones local |
+| GitHub | — | Repositorio remoto del proyecto |
+| Navegador web | — | Acceso a la interfaz de n8n |
 
-| Herramienta | Uso dentro del proyecto 
-| Docker Desktop | Permite ejecutar n8n dentro de un contenedor |
-| n8n | Plataforma principal para crear workflows y automatizar procesos |
-| Visual Studio Code | Editor de archivos del proyecto |
-| Git | Control de versiones local |
-| GitHub | Repositorio remoto del proyecto |
-| Navegador web | Acceso a la interfaz de n8n |
-| Jira | Gestión de épicas, historias de usuario y tareas del Sprint 1 |
-
+---
 
 ## 3. Justificación del entorno
 
-Se seleccionó n8n porque permite desarrollar un prototipo funcional basado en flujos de trabajo, Webhooks y automatizaciones. Esto se ajusta al enfoque de la asignatura, donde se busca demostrar el funcionamiento general del sistema y la aplicación de Scrum, sin requerir una implementación compleja de backend desde cero.
+Se seleccionó **n8n** porque permite desarrollar un prototipo funcional basado en flujos de trabajo, Webhooks y automatizaciones, ajustándose al enfoque de la asignatura sin requerir un backend tradicional desde cero.
 
-Docker se utiliza para facilitar la instalación, ejecución y portabilidad del entorno. De esta forma, cualquier integrante del equipo puede levantar el mismo entorno usando el archivo `docker-compose.yml`.
+**Docker** facilita la instalación, ejecución y portabilidad del entorno. Cualquier integrante puede levantar el mismo entorno con un solo comando usando el archivo `docker-compose.yml`.
+
+**PostgreSQL** fue incorporado en el Sprint 2 para reemplazar el almacenamiento interno de n8n. Esta migración permitió solucionar varios errores de consistencia de datos que existían cuando toda la lógica de persistencia estaba manejada directamente en JavaScript dentro de los nodos de n8n. Con PostgreSQL, los datos de workflows, donaciones y usuarios quedan correctamente persistidos en una base de datos relacional.
+
+**Jest** fue incorporado en el Sprint 2 para cumplir con los requisitos de calidad del taller de testing, permitiendo validar las funciones de lógica de negocio de forma aislada y medir la cobertura de código.
+
+---
 
 ## 4. Estructura del proyecto
-
-La estructura inicial del proyecto es la siguiente:
-
-Proyecto-Desperdicio-de-Alimentos
+Proyecto-Desperdicio-de-Alimentos/
 │
 ├── docker-compose.yml
 ├── README.md
-└── Configuracion_del_entorno.md
+├── Configuración del entorno.md
+├── .gitignore
+├── db/
+│   └── init.sql
+├── docs/
+├── workflows/
+│   └── flujo-integrado-excedentes-alimentarios.json
+└── pruebas/
+    ├── logica.js
+    ├── logica.test.js
+    └── pruebas/
+        ├── notificador.js
+        └── notificador.test.js
 
-5. Manual de instalación del entorno
+## 5. Manual de instalación del entorno
 
-Paso 1: Instalar Docker Desktop
+### Paso 1: Instalar Docker Desktop
 
-Primero se debe instalar Docker Desktop, ya que será la herramienta encargada de ejecutar n8n dentro de un contenedor.
+Descargar desde el sitio oficial de Docker e instalar. Verificar con:
 
-Pasos:
-
-Descargar Docker Desktop desde su sitio oficial.
-Ejecutar el instalador.
-Aceptar los términos de instalación.
-Reiniciar el computador si el instalador lo solicita.
-Abrir Docker Desktop.
-Verificar que Docker esté iniciado correctamente.
-
-Para comprobar la instalación, se debe abrir una terminal y ejecutar:
-
+```bash
 docker --version
-
-También se puede verificar Docker Compose con:
-
 docker compose version
+```
 
-Si ambos comandos muestran una versión instalada, Docker quedó configurado correctamente.
+### Paso 2: Clonar o crear la carpeta del proyecto
 
-Paso 2: Crear la carpeta del proyecto
-
-Se debe crear una carpeta local para almacenar los archivos del proyecto.
-
-Ejemplo de ruta en Windows:
-
-C:\Users\vicen\Proyecto-Desperdicio-de-Alimentos
-
-También puede crearse desde la terminal con:
-
-mkdir Proyecto-Desperdicio-de-Alimentos
+```bash
+git clone URL_DEL_REPOSITORIO
 cd Proyecto-Desperdicio-de-Alimentos
-Paso 3: Crear el archivo docker-compose.yml
+```
 
-Dentro de la carpeta del proyecto se debe crear el archivo:
+O bien crear la carpeta manualmente y copiar los archivos del proyecto.
 
-docker-compose.yml
+### Paso 3: Revisar el archivo docker-compose.yml
 
-Este archivo contiene la configuración necesaria para ejecutar n8n.
+El archivo `docker-compose.yml` levanta dos servicios:
 
-Contenido del archivo:
+- **postgres**: Base de datos PostgreSQL 16, accesible en el puerto `5432`. Se inicializa automáticamente con el archivo `db/init.sql`.
+- **n8n**: Plataforma de flujos, accesible en `http://localhost:5678`. Configurado para usar PostgreSQL como base de datos en lugar del almacenamiento interno.
 
-services:
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: n8n-desperdicio-alimentos
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    environment:
-      - TZ=America/Santiago
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - N8N_SECURE_COOKIE=false
-    volumes:
-      - n8n_data:/home/node/.n8n
+n8n espera a que PostgreSQL esté disponible antes de iniciarse (healthcheck configurado).
 
-volumes:
-  n8n_data:
+### Paso 4: Levantar el entorno
 
-Este archivo indica que n8n se ejecutará en el puerto 5678, accesible desde el navegador mediante localhost.
+Con Docker Desktop abierto, ejecutar dentro de la carpeta del proyecto:
 
-Paso 4: Levantar n8n con Docker
-
-Con Docker Desktop abierto, se debe ejecutar el siguiente comando dentro de la carpeta del proyecto:
-
+```bash
 docker compose up -d
+```
 
-Este comando descarga la imagen oficial de n8n y crea el contenedor.
+Este comando descarga las imágenes necesarias (n8n y PostgreSQL), crea los contenedores y los inicia en segundo plano.
 
-Para verificar que el contenedor está funcionando, se utiliza:
+Para verificar que ambos contenedores están activos:
 
+```bash
 docker ps
+```
 
-Debe aparecer un contenedor llamado:
+Deben aparecer dos contenedores:
+- `postgres`
+- `n8n`
 
-n8n-desperdicio-alimentos
-Paso 5: Acceder a n8n desde el navegador
+### Paso 5: Acceder a n8n
 
-Una vez iniciado el contenedor, se debe abrir el navegador e ingresar a:
+Abrir el navegador e ingresar a: http://localhost:5678
 
-http://localhost:5678
+Se mostrará la interfaz de n8n lista para usar.
 
-Si el entorno está correctamente configurado, se mostrará la interfaz inicial de n8n.
+### Paso 6: Instalar dependencias de Node.js (para testing)
 
-En este punto, el equipo puede crear workflows relacionados con las historias de usuario del sprint.
+```bash
+npm install
+```
 
-6. Instalación de dependencias
+Esto instala Jest y las dependencias necesarias para ejecutar los tests.
 
-No se requiere instalar dependencias tradicionales de backend, ya que n8n se ejecuta completamente dentro del contenedor Docker.
+---
 
-La principal dependencia del entorno es la imagen oficial de n8n:
+## 6. Ejecutar los tests
 
-n8nio/n8n:latest
+### Correr todos los tests
 
-Esta imagen se descarga automáticamente al ejecutar:
+```bash
+npm test
+```
 
-docker compose up -d
+Resultado esperado: **21/21 tests pasando, 2 suites.**
 
-También se utiliza un volumen llamado:
+### Ver reporte de cobertura
 
-n8n_data
+```bash
+npx jest --coverage
+```
 
-Este volumen permite conservar la información de n8n, como workflows, credenciales locales y configuraciones, incluso si el contenedor se detiene.
+Resultado esperado: **100% en Statements, Branch, Functions y Lines** para los archivos `logica.js` y `notificador.js`.
 
-7. Verificación del entorno
+---
 
-Para comprobar que el entorno funciona sin problemas, se realizaron pruebas básicas dentro de n8n.
+## 7. Verificación del entorno
 
-Prueba 1: Verificar que el contenedor está activo
+### Prueba 1: Verificar contenedores activos
 
-Se ejecutó el siguiente comando:
-
+```bash
 docker ps
+```
 
-Resultado esperado:
+Deben aparecer activos: `postgres` y `n8n`.
 
-n8n-desperdicio-alimentos
+### Prueba 2: Verificar acceso a n8n
 
-El contenedor debe aparecer en estado activo, indicando que n8n se está ejecutando correctamente.
+Abrir `http://localhost:5678` en el navegador. La interfaz debe cargar correctamente.
 
-Prueba 2: Verificar acceso a la interfaz web
+### Prueba 3: Verificar conexión de n8n con PostgreSQL
 
-Se ingresó desde el navegador a:
+En los logs de n8n debe aparecer que la conexión a la base de datos fue exitosa:
 
-http://localhost:5678
+```bash
+docker logs n8n
+```
 
-Resultado esperado:
+### Prueba 4: Ejecutar tests unitarios
 
-La interfaz de n8n carga correctamente.
+```bash
+npm test
+```
 
-Esta prueba confirma que Docker está ejecutando n8n y que el puerto 5678 está disponible.
+Todos los tests deben pasar en verde.
 
-Prueba 3: Crear workflow de prueba con Webhook
+---
 
-Para validar el funcionamiento de n8n, se creó un workflow simple con los siguientes nodos:
+## 8. Comandos útiles
 
-Webhook
-Code
-Respond to Webhook
-
-El nodo Webhook recibe una solicitud de prueba.
-El nodo Code procesa los datos recibidos.
-El nodo Respond to Webhook devuelve una respuesta al navegador o a Postman.
-
-Código utilizado en el nodo Code:
-
-return [
-  {
-    json: {
-      mensaje: "Entorno n8n funcionando correctamente",
-      proyecto: "Plataforma de Gestión de Excedentes Alimentarios",
-      estado: "OK"
-    }
-  }
-];
-
-Resultado esperado:
-
-{
-  "mensaje": "Entorno n8n funcionando correctamente",
-  "proyecto": "Plataforma de Gestión de Excedentes Alimentarios",
-  "estado": "OK"
-}
-
-Esta prueba confirma que n8n puede recibir una solicitud, procesarla y responder correctamente.
-
-Prueba 4: Simulación de publicación de excedente
-
-También se realizó una prueba simulando el registro de una donación.
-
-Ejemplo de datos enviados al Webhook:
-
-{
-  "producto": "Pan",
-  "categoria": "Panadería",
-  "cantidad": 10,
-  "fecha_vencimiento": "2026-05-04",
-  "donante": "Supermercado de prueba"
-}
-
-Respuesta esperada del workflow:
-
-{
-  "mensaje": "Donación registrada correctamente",
-  "producto": "Pan",
-  "estado": "Disponible"
-}
-
-Esta prueba permite validar que el entorno puede representar el flujo base de publicación de excedentes alimentarios.
-
-8. Comandos útiles del entorno
-
-Para iniciar n8n:
-
+```bash
+# Iniciar el entorno
 docker compose up -d
 
-Para detener n8n:
-
+# Detener el entorno
 docker compose down
 
-Para ver los contenedores activos:
-
+# Ver contenedores activos
 docker ps
 
-Para ver todos los contenedores, incluso detenidos:
+# Ver logs de n8n
+docker logs n8n
 
-docker ps -a
+# Ver logs de PostgreSQL
+docker logs postgres
 
-Para revisar los logs de n8n:
+# Reiniciar un contenedor
+docker restart n8n
+docker restart postgres
 
-docker logs n8n-desperdicio-alimentos
+# Correr tests
+npm test
 
-Para reiniciar el contenedor:
+# Ver cobertura
+npx jest --coverage
+```
 
-docker restart n8n-desperdicio-alimentos
-9. Control de versiones
+---
 
-El proyecto utiliza Git y GitHub para registrar los avances del equipo.
+## 9. Control de versiones
 
-Comandos básicos utilizados:
+El proyecto usa Git y GitHub. Ramas principales:
 
-git init
-git add .
-git commit -m "Configuración inicial del entorno con Docker y n8n"
-git branch -M main
-git remote add origin URL_DEL_REPOSITORIO
-git push -u origin main
+| Rama | Contenido |
+|---|---|
+| `main` | Código estable del proyecto |
+| `testing` | Carpeta de tests, informe de taller y cobertura |
 
-También se pueden crear ramas por historia de usuario, por ejemplo:
+Comandos para trabajar con la rama testing:
 
-git checkout -b HU-04
+```bash
+# Crear y cambiar a la rama testing
+git checkout -b testing
 
-Esto permite separar el trabajo según las funcionalidades desarrolladas.
+# Agregar archivos
+git add pruebas/
 
-10. Conclusión de la configuración
+# Hacer commit
+git commit -m "feat: agrega carpeta de tests - testing unitario, mocking y cobertura"
 
-El entorno de desarrollo fue configurado correctamente utilizando Docker Desktop y n8n como plataforma principal de automatización.
+# Subir rama al repositorio remoto
+git push origin testing
+```
 
-La configuración mediante docker-compose.yml permite levantar el entorno de forma rápida y replicable por cualquier integrante del equipo. Además, las pruebas realizadas permitieron verificar que n8n funciona correctamente, que la interfaz web es accesible desde el navegador y que los workflows pueden recibir, procesar y responder solicitudes.
+---
 
-Con este entorno, el equipo cuenta con una base funcional para desarrollar y demostrar los flujos principales del prototipo, especialmente aquellos relacionados con publicación de excedentes, alertas, priorización por vencimiento y reserva de donaciones.
+## 10. Conclusión
 
-La estructura inicial del proyecto es la siguiente:
+El entorno de desarrollo fue configurado correctamente utilizando Docker Desktop, n8n y PostgreSQL 16. La migración desde el almacenamiento interno de n8n hacia PostgreSQL en el Sprint 2 resolvió varios problemas de persistencia de datos y preparó la base para las funcionalidades del Sprint 3.
 
-Proyecto-Desperdicio-de-Alimentos
-│
-├── docker-compose.yml
-├── README.md
-└── Configuracion_del_entorno.md
+La incorporación de Jest permitió validar la lógica de negocio con 21 tests unitarios y alcanzar un 100% de cobertura sobre los módulos seleccionados.
+
+El entorno es completamente reproducible: cualquier integrante puede clonarlo y levantarlo con `docker compose up -d` y `npm install`.
