@@ -1,49 +1,50 @@
 -- init.sql
--- Base de datos inicial para Plataforma de Gestión de Excedentes Alimentarios
+-- Base de datos para Plataforma de Gestión de Excedentes Alimentarios
+-- Estructura real según Docker (n8n + PostgreSQL 16)
 
 CREATE TABLE IF NOT EXISTS usuarios (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(150) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    rol VARCHAR(20) NOT NULL CHECK (rol IN ('DONANTE', 'ONG')),
+    id BIGSERIAL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    rol TEXT NOT NULL CHECK (rol = ANY (ARRAY['DONANTE'::text, 'ONG'::text])),
     direccion TEXT,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    verificado BOOLEAN DEFAULT TRUE,
+    creado_en TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS donaciones (
-    id SERIAL PRIMARY KEY,
-    donante_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-    donante_nombre VARCHAR(150),
-    nombre VARCHAR(150) NOT NULL,
-    categoria VARCHAR(100),
-    cantidad INTEGER NOT NULL,
-    vencimiento TIMESTAMP NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    donante_id BIGINT REFERENCES usuarios(id),
+    donante_nombre TEXT,
+    nombre TEXT NOT NULL,
+    categoria TEXT,
+    cantidad INTEGER CHECK (cantidad >= 0),
+    vencimiento TIMESTAMPTZ,
     cadena_frio BOOLEAN DEFAULT FALSE,
     observaciones TEXT,
-    estado VARCHAR(30) NOT NULL DEFAULT 'DISPONIBLE'
-        CHECK (estado IN ('DISPONIBLE', 'RESERVADA', 'ENTREGADA', 'VENCIDO', 'CADUCADA')),
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    estado TEXT DEFAULT 'DISPONIBLE'
+        CHECK (estado = ANY (ARRAY['DISPONIBLE'::text, 'RESERVADA'::text, 'VENCIDO'::text, 'RETIRADA'::text])),
+    creado_en TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS notificaciones (
-    id SERIAL PRIMARY KEY,
-    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
-    organizacion_nombre VARCHAR(150),
-    donacion_id INTEGER REFERENCES donaciones(id) ON DELETE CASCADE,
-    mensaje TEXT NOT NULL,
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id BIGSERIAL PRIMARY KEY,
+    usuario_id BIGINT REFERENCES usuarios(id),
+    organizacion_nombre TEXT,
+    donacion_id BIGINT REFERENCES donaciones(id),
+    mensaje TEXT,
+    fecha TIMESTAMPTZ DEFAULT NOW(),
     leida BOOLEAN DEFAULT FALSE,
     es_alerta_vencido BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS reservas (
-    id SERIAL PRIMARY KEY,
-    donacion_id INTEGER REFERENCES donaciones(id) ON DELETE CASCADE,
-    producto VARCHAR(150),
-    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
-    organizacion_nombre VARCHAR(150),
-    codigo_qr VARCHAR(255),
-    fecha_reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado VARCHAR(30) DEFAULT 'ACTIVA'
-        CHECK (estado IN ('ACTIVA', 'COMPLETADA', 'EXPIRADA'))
+    id BIGINT PRIMARY KEY DEFAULT nextval('reservas_id_seq'),
+    donacion_id BIGINT REFERENCES donaciones(id),
+    producto TEXT,
+    usuario_id BIGINT REFERENCES usuarios(id),
+    organizacion_nombre TEXT,
+    codigo_qr TEXT,
+    fecha_reserva TIMESTAMPTZ DEFAULT NOW(),
+    estado TEXT DEFAULT 'ACTIVA'
 );
