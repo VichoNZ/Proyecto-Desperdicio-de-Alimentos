@@ -16,3 +16,4 @@ package.jsonnode_modules/
 coverage/
 .env
 node_modules/
+coverage/
