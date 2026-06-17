@@ -1,0 +1,17 @@
+# Datos locales de PostgreSQL / Docker
+postgres_data/
+*.log
+
+# Archivos temporales
+.DS_Store
+Thumbs.db
+
+# n8n local
+.n8n/
+
+node_modules/
+coverage/
+package-lock.json
+package.jsonnode_modules/
+coverage/
+.env
